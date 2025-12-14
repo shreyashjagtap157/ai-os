@@ -1,0 +1,39 @@
+# AI-OS Color Palette
+# Use these values for consistent theming
+
+# Primary Colors
+primary: "#667eea"
+primary_variant: "#764ba2"
+secondary: "#03dac5"
+
+# Background (Dark Theme)
+background: "#1a1a2e"
+surface: "#16213e"
+surface_variant: "#2a3552"
+
+# Text
+text_primary: "#ffffff"
+text_secondary: "#b4b4c8"
+text_disabled: "#64647a"
+
+# Status Colors
+success: "#4caf50"
+warning: "#ffc107"
+error: "#f44336"
+info: "#2196f3"
+
+# Borders
+border: "#3c4664"
+divider: "#323250"
+
+# Gradients
+gradient_primary: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+gradient_secondary: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)"
+
+# Shadows
+shadow: "rgba(0, 0, 0, 0.3)"
+shadow_lg: "rgba(0, 0, 0, 0.5)"
+
+# Transparency
+overlay_light: "rgba(255, 255, 255, 0.1)"
+overlay_dark: "rgba(0, 0, 0, 0.3)"

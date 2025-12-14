@@ -1,0 +1,15 @@
+[Unit]
+Description=AI-OS Input Service
+After=aios-agent.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/lib/aios/services/input/input.py
+Restart=always
+RestartSec=3
+
+# Needs access to input devices
+SupplementaryGroups=input
+
+[Install]
+WantedBy=multi-user.target

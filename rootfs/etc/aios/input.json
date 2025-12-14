@@ -1,0 +1,12 @@
+{
+    "hotkeys": [
+        {"modifiers": ["super"], "key": "space", "action": "agent_activate", "description": "Activate AI Agent"},
+        {"modifiers": ["super"], "key": "a", "action": "app_launcher", "description": "Open App Launcher"},
+        {"modifiers": ["super"], "key": "t", "action": "terminal", "description": "Open Terminal"},
+        {"modifiers": ["super"], "key": "l", "action": "lock", "description": "Lock Screen"},
+        {"modifiers": ["super"], "key": "e", "action": "file_manager", "description": "Open File Manager"},
+        {"modifiers": ["super"], "key": "s", "action": "settings", "description": "Open Settings"},
+        {"modifiers": ["ctrl", "alt"], "key": "delete", "action": "system_menu", "description": "System Menu"},
+        {"modifiers": [], "key": "Print", "action": "screenshot", "description": "Take Screenshot"}
+    ]
+}

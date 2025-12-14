@@ -1,0 +1,18 @@
+[Unit]
+Description=AI-OS Power Manager
+After=aios-agent.service
+Wants=aios-agent.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/aios-power
+Restart=always
+RestartSec=3
+
+# Power management needs SYS_ADMIN
+CapabilityBoundingSet=CAP_SYS_ADMIN
+AmbientCapabilities=CAP_SYS_ADMIN
+RuntimeDirectory=aios
+
+[Install]
+WantedBy=multi-user.target

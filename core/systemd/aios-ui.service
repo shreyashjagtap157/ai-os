@@ -1,0 +1,29 @@
+[Unit]
+Description=AI-OS Display Manager
+Documentation=https://github.com/yourusername/ai-os
+After=systemd-user-sessions.service getty@tty1.service plymouth-quit.service aios-agent.service
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/aios/ui/aios-ui
+Restart=always
+RestartSec=3
+User=root
+Group=video
+
+# Wayland/DRM requirements
+SupplementaryGroups=video input render
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+# Environment for Wayland
+Environment="XDG_SESSION_TYPE=wayland"
+Environment="XDG_RUNTIME_DIR=/run/user/0"
+Environment="WAYLAND_DISPLAY=wayland-0"
+
+[Install]
+WantedBy=graphical.target
+Alias=display-manager.service

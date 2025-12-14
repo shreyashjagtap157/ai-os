@@ -1,0 +1,7 @@
+config BR2_PACKAGE_AIOS_AGENT
+	bool "aios-agent"
+	depends on BR2_PACKAGE_PYTHON3
+	depends on BR2_PACKAGE_AIOS_CORE
+	select BR2_PACKAGE_PYTHON_REQUESTS
+	help
+	  AI-OS Agent daemon with LLM integration.

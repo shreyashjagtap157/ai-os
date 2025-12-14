@@ -1,0 +1,12 @@
+################################################################################
+#
+# AI-OS for x86_64 PC
+#
+################################################################################
+
+# Include base configuration
+include $(BR2_EXTERNAL_AIOS_EXTERNAL_PATH)/configs/aios_defconfig
+
+# x86_64 specific
+BR2_x86_64=y
+BR2_x86_corei7=y

@@ -1,0 +1,4 @@
+source "$BR2_EXTERNAL_AIOS_EXTERNAL_PATH/package/aios-core/Config.in"
+source "$BR2_EXTERNAL_AIOS_EXTERNAL_PATH/package/aios-agent/Config.in"
+source "$BR2_EXTERNAL_AIOS_EXTERNAL_PATH/package/aios-ui/Config.in"
+source "$BR2_EXTERNAL_AIOS_EXTERNAL_PATH/package/aios-voice/Config.in"

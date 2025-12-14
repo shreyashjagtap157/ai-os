@@ -1,0 +1,9 @@
+{
+    "require_permission_prompt": true,
+    "allow_root_apps": false,
+    "sandbox_apps": true,
+    "log_all_actions": true,
+    "dangerous_confirmation": true,
+    "max_failed_auth": 5,
+    "lockout_duration": 300
+}

@@ -1,0 +1,9 @@
+# AI-OS Configuration
+{
+    "ai_provider": "openai",
+    "model": "gpt-4",
+    "voice_enabled": true,
+    "wake_word": "hey ai",
+    "tts_enabled": true,
+    "confirm_dangerous": true
+}

@@ -1,0 +1,33 @@
+[Unit]
+Description=AI-OS Agent Daemon
+Documentation=https://github.com/yourusername/ai-os
+After=network.target
+Before=aios-display.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/lib/aios/services/agent/agent.py
+Restart=always
+RestartSec=3
+
+# Environment
+EnvironmentFile=-/etc/aios/agent.env
+Environment=PYTHONUNBUFFERED=1
+
+# Create runtime directory
+RuntimeDirectory=aios
+RuntimeDirectoryMode=0755
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/aios /var/log/aios /run/aios /etc/aios
+PrivateTmp=true
+NoNewPrivileges=false
+
+# Capabilities needed for hardware control
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target

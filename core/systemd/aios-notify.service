@@ -1,0 +1,13 @@
+[Unit]
+Description=AI-OS Notification Daemon
+Before=aios-agent.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/aios-notify
+Restart=always
+RestartSec=3
+RuntimeDirectory=aios
+
+[Install]
+WantedBy=multi-user.target

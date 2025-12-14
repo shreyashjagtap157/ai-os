@@ -1,0 +1,106 @@
+#!/bin/bash
+#
+# AI-OS Early Init Script
+# Runs before systemd to set up essential environment
+#
+
+# Mount essential filesystems
+mount_filesystems() {
+    echo "[INIT] Mounting filesystems..."
+    
+    mount -t proc proc /proc -o nosuid,noexec,nodev 2>/dev/null
+    mount -t sysfs sys /sys -o nosuid,noexec,nodev 2>/dev/null
+    mount -t devtmpfs dev /dev -o mode=0755,nosuid 2>/dev/null
+    mount -t tmpfs run /run -o mode=0755,nosuid,nodev 2>/dev/null
+    mount -t tmpfs tmp /tmp -o mode=1777,nosuid,nodev 2>/dev/null
+    
+    mkdir -p /dev/pts /dev/shm
+    mount -t devpts devpts /dev/pts -o mode=0620,gid=5,nosuid,noexec 2>/dev/null
+    mount -t tmpfs shm /dev/shm -o mode=1777,nosuid,nodev 2>/dev/null
+}
+
+# Load essential kernel modules
+load_modules() {
+    echo "[INIT] Loading kernel modules..."
+    
+    # Input
+    modprobe -q evdev
+    modprobe -q hid-generic
+    modprobe -q usbhid
+    
+    # Graphics
+    modprobe -q drm
+    modprobe -q i915 2>/dev/null || modprobe -q amdgpu 2>/dev/null || modprobe -q nouveau 2>/dev/null
+    modprobe -q fbcon
+    
+    # Audio
+    modprobe -q snd-hda-intel 2>/dev/null
+    
+    # Network
+    modprobe -q e1000e 2>/dev/null
+    modprobe -q iwlwifi 2>/dev/null
+}
+
+# Setup hostname
+setup_hostname() {
+    if [ -f /etc/hostname ]; then
+        hostname -F /etc/hostname
+    else
+        hostname aios
+    fi
+}
+
+# Show boot splash
+show_splash() {
+    if [ -x /usr/sbin/aios-splash ]; then
+        /usr/sbin/aios-splash &
+        SPLASH_PID=$!
+    fi
+}
+
+# Display AI-OS banner
+show_banner() {
+    clear
+    echo ""
+    echo "    _    ___       ___  ____  "
+    echo "   / \\  |_ _|     / _ \\/ ___| "
+    echo "  / _ \\  | |_____| | | \\___ \\ "
+    echo " / ___ \\ | |_____| |_| |___) |"
+    echo "/_/   \\_\\___|     \\___/|____/ "
+    echo ""
+    echo "          AI Operating System"
+    echo ""
+    echo "  Version: 1.0.0"
+    echo "  Kernel:  $(uname -r)"
+    echo ""
+}
+
+# Transition to systemd
+start_systemd() {
+    echo "[INIT] Starting systemd..."
+    
+    # Kill splash
+    [ -n "$SPLASH_PID" ] && kill $SPLASH_PID 2>/dev/null
+    
+    # Execute systemd
+    exec /lib/systemd/systemd
+}
+
+# Main
+main() {
+    export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+    
+    mount_filesystems
+    load_modules
+    setup_hostname
+    
+    # Only show splash/banner on real console
+    if [ "$(tty)" = "/dev/console" ] || [ "$(tty)" = "/dev/tty1" ]; then
+        show_splash
+        show_banner
+    fi
+    
+    start_systemd
+}
+
+main "$@"

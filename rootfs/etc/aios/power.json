@@ -1,0 +1,10 @@
+{
+    "low_battery_threshold": 15,
+    "critical_battery_threshold": 5,
+    "auto_suspend_ac_minutes": 0,
+    "auto_suspend_battery_minutes": 15,
+    "dim_screen_on_battery": true,
+    "power_button_action": "suspend",
+    "lid_close_action": "suspend",
+    "default_profile": "balanced"
+}

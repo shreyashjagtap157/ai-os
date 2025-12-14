@@ -1,0 +1,30 @@
+[Unit]
+Description=AI-OS Voice Recognition Service
+Documentation=https://github.com/yourusername/ai-os
+After=aios-agent.service sound.target
+Requires=aios-agent.service
+ConditionPathExists=/dev/snd
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/lib/aios/services/voice/voice.py
+Restart=always
+RestartSec=5
+
+# Environment
+EnvironmentFile=-/etc/aios/voice.env
+Environment=PYTHONUNBUFFERED=1
+
+# Audio access
+SupplementaryGroups=audio
+
+# Filesystem
+ReadWritePaths=/var/log/aios /run/aios
+
+# Security
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

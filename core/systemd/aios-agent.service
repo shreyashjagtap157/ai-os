@@ -1,0 +1,27 @@
+[Unit]
+Description=AI-OS Agent Daemon
+After=local-fs.target network.target
+Wants=aios-notify.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/aios-agent
+Restart=always
+RestartSec=3
+RuntimeDirectory=aios
+StateDirectory=aios
+LogsDirectory=aios
+
+# Environment
+EnvironmentFile=-/etc/aios/agent.env
+
+# Security
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/run/aios /var/lib/aios /var/log/aios
+PrivateTmp=true
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+{
+    "id": "weather-plugin",
+    "name": "Weather Plugin",
+    "version": "1.0.0",
+    "description": "Get weather information through AI commands",
+    "author": "AI-OS Team",
+    "type": "agent_skill",
+    "dependencies": [],
+    "permissions": ["network.access"],
+    "config_schema": {
+        "api_key": {
+            "type": "string",
+            "description": "Weather API key"
+        },
+        "units": {
+            "type": "string",
+            "default": "metric",
+            "enum": ["metric", "imperial"]
+        }
+    }
+}

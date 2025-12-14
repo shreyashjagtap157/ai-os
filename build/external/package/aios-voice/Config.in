@@ -1,0 +1,8 @@
+config BR2_PACKAGE_AIOS_VOICE
+	bool "aios-voice"
+	depends on BR2_PACKAGE_PYTHON3
+	depends on BR2_PACKAGE_AIOS_AGENT
+	select BR2_PACKAGE_PORTAUDIO
+	select BR2_PACKAGE_ESPEAK
+	help
+	  AI-OS Voice recognition and TTS service.

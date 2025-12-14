@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+"""
+AI-OS CLI Tool
+Command-line interface for interacting with AI-OS.
+"""
+
+import os
+import sys
+import json
+import socket
+import struct
+import argparse
+import readline
+from typing import Optional, Dict, Any
+
+
+SOCKET_PATH = "/run/aios/agent.sock"
+VERSION = "1.0.0"
+
+
+def send_command(cmd: str, **kwargs) -> Dict[str, Any]:
+    """Send command to agent and get response"""
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(30)
+            sock.connect(SOCKET_PATH)
+            
+            message = {'cmd': cmd, **kwargs}
+            data = json.dumps(message).encode('utf-8')
+            
+            sock.sendall(struct.pack('!I', len(data)))
+            sock.sendall(data)
+            
+            length_data = sock.recv(4)
+            if not length_data:
+                return {'error': 'No response'}
+            
+            length = struct.unpack('!I', length_data)[0]
+            response_data = b''
+            while len(response_data) < length:
+                chunk = sock.recv(min(4096, length - len(response_data)))
+                if not chunk:
+                    break
+                response_data += chunk
+            
+            return json.loads(response_data.decode('utf-8'))
+            
+    except FileNotFoundError:
+        return {'error': 'Agent not running. Start with: systemctl start aios-agent'}
+    except Exception as e:
+        return {'error': str(e)}
+
+
+def cmd_status(args):
+    """Show system status"""
+    result = send_command('status')
+    
+    if 'error' in result:
+        print(f"Error: {result['error']}")
+        return 1
+    
+    print("┌─────────────────────────────────────┐")
+    print("│         AI-OS Status                │")
+    print("├─────────────────────────────────────┤")
+    print(f"│ Running:        {str(result.get('running', False)):>18} │")
+    print(f"│ AI Configured:  {str(result.get('ai_configured', False)):>18} │")
+    
+    system = result.get('system', {})
+    if system:
+        print("├─────────────────────────────────────┤")
+        print(f"│ Hostname:       {system.get('hostname', 'Unknown')[:18]:>18} │")
+        print(f"│ Kernel:         {system.get('kernel', 'Unknown')[:18]:>18} │")
+        if 'memory_mb' in system:
+            mem_used = system.get('memory_mb', 0) - system.get('memory_free_mb', 0)
+            print(f"│ Memory:         {mem_used:>9}/{system['memory_mb']:<7} MB │")
+        if 'disk_free_gb' in system:
+            print(f"│ Disk Free:      {system['disk_free_gb']:>15} GB │")
+        if 'uptime_hours' in system:
+            print(f"│ Uptime:         {system['uptime_hours']:>14} hrs │")
+    
+    print("└─────────────────────────────────────┘")
+    return 0
+
+
+def cmd_chat(args):
+    """Send a message to the AI agent"""
+    text = ' '.join(args.text)
+    
+    if not text:
+        print("Error: No message provided")
+        return 1
+    
+    result = send_command('chat', text=text)
+    
+    if 'error' in result:
+        print(f"Error: {result['error']}")
+        return 1
+    
+    print(f"\n{result.get('response', 'No response')}")
+    
+    action_result = result.get('action_result')
+    if action_result:
+        if action_result.get('success'):
+            print(f"\n✓ {action_result.get('message', 'Done')}")
+        else:
+            print(f"\n✗ {action_result.get('message', 'Failed')}")
+        
+        # Show data if present
+        data = action_result.get('data')
+        if data:
+            print()
+            for key, value in data.items():
+                if isinstance(value, list):
+                    print(f"{key}:")
+                    for item in value[:10]:
+                        print(f"  - {item}")
+                else:
+                    print(f"{key}: {value}")
+    
+    return 0
+
+
+def cmd_action(args):
+    """Execute a direct action"""
+    action = {
+        'action': args.action_type
+    }
+    
+    # Parse key=value parameters
+    for param in args.params:
+        if '=' in param:
+            key, value = param.split('=', 1)
+            # Try to parse as JSON for booleans/numbers
+            try:
+                value = json.loads(value)
+            except:
+                pass
+            action[key] = value
+    
+    result = send_command('action', action=action)
+    
+    if 'error' in result:
+        print(f"Error: {result['error']}")
+        return 1
+    
+    action_result = result.get('result', {})
+    if action_result.get('success'):
+        print(f"✓ {action_result.get('message', 'Done')}")
+        
+        data = action_result.get('data')
+        if data:
+            print(json.dumps(data, indent=2))
+    else:
+        print(f"✗ {action_result.get('message', 'Failed')}")
+    
+    return 0
+
+
+def cmd_shell(args):
+    """Interactive shell"""
+    print("┌─────────────────────────────────────────────────┐")
+    print("│            AI-OS Interactive Shell              │")
+    print("├─────────────────────────────────────────────────┤")
+    print("│  Type commands to chat with AI.                 │")
+    print("│  Use !<cmd> for direct actions.                 │")
+    print("│  Type 'exit' or Ctrl+D to quit.                 │")
+    print("└─────────────────────────────────────────────────┘")
+    print()
+    
+    # Setup readline
+    histfile = os.path.expanduser("~/.aios_history")
+    try:
+        readline.read_history_file(histfile)
+    except FileNotFoundError:
+        pass
+    
+    readline.set_history_length(1000)
+    
+    while True:
+        try:
+            line = input("\033[1;36mAI-OS>\033[0m ").strip()
+            
+            if not line:
+                continue
+            
+            if line.lower() in ('exit', 'quit', 'q'):
+                print("Goodbye!")
+                break
+            
+            if line.lower() == 'help':
+                print("""
+Available Commands:
+  <text>         Chat with AI agent
+  !status        Show system status
+  !brightness N  Set brightness (0-100)
+  !volume N      Set volume (0-100)
+  !wifi on/off   Toggle WiFi
+  !launch APP    Launch application
+  !clear         Clear conversation
+  help           Show this help
+  exit           Exit shell
+""")
+                continue
+            
+            if line.startswith('!'):
+                # Direct command
+                parts = line[1:].split()
+                if not parts:
+                    continue
+                
+                cmd = parts[0].lower()
+                
+                if cmd == 'status':
+                    cmd_status(argparse.Namespace())
+                elif cmd == 'brightness' and len(parts) > 1:
+                    result = send_command('action', action={'action': 'brightness', 'level': int(parts[1])})
+                    print(result.get('result', {}).get('message', str(result)))
+                elif cmd == 'volume' and len(parts) > 1:
+                    result = send_command('action', action={'action': 'volume', 'level': int(parts[1])})
+                    print(result.get('result', {}).get('message', str(result)))
+                elif cmd == 'wifi' and len(parts) > 1:
+                    enabled = parts[1].lower() in ('on', 'true', '1', 'yes')
+                    result = send_command('action', action={'action': 'wifi', 'enabled': enabled})
+                    print(result.get('result', {}).get('message', str(result)))
+                elif cmd == 'launch' and len(parts) > 1:
+                    app = ' '.join(parts[1:])
+                    result = send_command('action', action={'action': 'launch', 'app': app})
+                    print(result.get('result', {}).get('message', str(result)))
+                elif cmd == 'clear':
+                    result = send_command('clear')
+                    print("Conversation cleared.")
+                else:
+                    print(f"Unknown command: {cmd}")
+            else:
+                # Chat with AI
+                result = send_command('chat', text=line)
+                
+                if 'error' in result:
+                    print(f"\033[31mError: {result['error']}\033[0m")
+                else:
+                    print(f"\n\033[32m{result.get('response', 'No response')}\033[0m")
+                    
+                    action_result = result.get('action_result')
+                    if action_result:
+                        if action_result.get('success'):
+                            print(f"\n\033[33m✓ {action_result.get('message', 'Done')}\033[0m")
+                        else:
+                            print(f"\n\033[31m✗ {action_result.get('message', 'Failed')}\033[0m")
+            
+            print()
+            
+        except KeyboardInterrupt:
+            print("\nUse 'exit' to quit.")
+        except EOFError:
+            print("\nGoodbye!")
+            break
+        except Exception as e:
+            print(f"\033[31mError: {e}\033[0m")
+    
+    # Save history
+    try:
+        readline.write_history_file(histfile)
+    except:
+        pass
+    
+    return 0
+
+
+def cmd_version(args):
+    """Show version"""
+    print(f"AI-OS CLI v{VERSION}")
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog='aios',
+        description='AI-OS Command Line Interface'
+    )
+    parser.add_argument('-v', '--version', action='store_true', help='Show version')
+    
+    subparsers = parser.add_subparsers(dest='command')
+    
+    # Status command
+    status_parser = subparsers.add_parser('status', help='Show system status')
+    status_parser.set_defaults(func=cmd_status)
+    
+    # Chat command
+    chat_parser = subparsers.add_parser('chat', help='Chat with AI agent')
+    chat_parser.add_argument('text', nargs='*', help='Message to send')
+    chat_parser.set_defaults(func=cmd_chat)
+    
+    # Action command
+    action_parser = subparsers.add_parser('action', help='Execute direct action')
+    action_parser.add_argument('action_type', help='Action type (brightness, volume, etc)')
+    action_parser.add_argument('params', nargs='*', help='Parameters as key=value')
+    action_parser.set_defaults(func=cmd_action)
+    
+    # Shell command
+    shell_parser = subparsers.add_parser('shell', help='Interactive shell')
+    shell_parser.set_defaults(func=cmd_shell)
+    
+    args = parser.parse_args()
+    
+    if args.version:
+        return cmd_version(args)
+    
+    if not args.command:
+        # Default to shell
+        return cmd_shell(args)
+    
+    return args.func(args)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

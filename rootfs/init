@@ -1,0 +1,41 @@
+#!/bin/sh
+#==============================================================================
+# AI-OS Init Script
+# Early boot initialization before systemd takes over
+#==============================================================================
+
+# Mount essential filesystems
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+mkdir -p /dev/pts /dev/shm
+mount -t devpts devpts /dev/pts
+mount -t tmpfs tmpfs /dev/shm
+
+# Enable kernel logging
+echo 0 > /proc/sys/kernel/printk
+
+# Load essential kernel modules
+modprobe loop 2>/dev/null
+modprobe overlay 2>/dev/null
+
+# Set hostname
+if [ -f /etc/hostname ]; then
+    hostname -F /etc/hostname
+else
+    hostname aios
+fi
+
+# Mount additional filesystems from fstab
+mount -a 2>/dev/null
+
+# Create runtime directories
+mkdir -p /run/aios
+mkdir -p /run/user/0
+chmod 700 /run/user/0
+
+# Setup networking basics
+ip link set lo up 2>/dev/null
+
+# Hand off to systemd
+exec /lib/systemd/systemd

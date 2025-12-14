@@ -1,0 +1,5 @@
+config BR2_PACKAGE_AIOS_CORE
+	bool "aios-core"
+	depends on BR2_PACKAGE_PYTHON3
+	help
+	  AI-OS Core components including HAL and system utilities.

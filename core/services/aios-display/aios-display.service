@@ -1,0 +1,32 @@
+[Unit]
+Description=AI-OS Display Compositor
+Documentation=https://github.com/yourusername/ai-os
+After=aios-agent.service
+Requires=aios-agent.service
+ConditionPathExists=/dev/dri
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/lib/aios/services/display/compositor.py
+Restart=always
+RestartSec=3
+
+# Environment
+Environment=XDG_RUNTIME_DIR=/run/user/0
+Environment=WAYLAND_DISPLAY=wayland-0
+EnvironmentFile=-/etc/aios/display.env
+
+# Run as root for DRM access
+User=root
+Group=root
+
+# Filesystem access
+ReadWritePaths=/var/log/aios /run/user/0
+
+# Create runtime directory
+RuntimeDirectory=user/0
+RuntimeDirectoryMode=0700
+
+[Install]
+WantedBy=graphical.target
+Alias=display-manager.service

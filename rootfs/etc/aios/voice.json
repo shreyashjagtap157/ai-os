@@ -1,0 +1,13 @@
+{
+    "enabled": true,
+    "wake_word": "hey ai",
+    "stt_engine": "vosk",
+    "tts_engine": "espeak",
+    "sample_rate": 16000,
+    "vad_aggressiveness": 3,
+    "vosk_model_path": "/usr/share/vosk-models/small-en-us",
+    "tts_voice": "en-us",
+    "tts_rate": 150,
+    "listen_timeout": 5,
+    "activation_sound": true
+}

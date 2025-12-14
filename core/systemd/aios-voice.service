@@ -1,0 +1,17 @@
+[Unit]
+Description=AI-OS Voice Service
+After=aios-agent.service sound.target
+Requires=aios-agent.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/aios-voice
+Restart=always
+RestartSec=5
+
+# Audio access
+SupplementaryGroups=audio
+Environment=PULSE_RUNTIME_PATH=/run/user/0/pulse
+
+[Install]
+WantedBy=multi-user.target

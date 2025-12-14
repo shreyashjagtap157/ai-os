@@ -1,0 +1,17 @@
+[Unit]
+Description=AI-OS Network Manager
+After=network.target NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/aios-network
+Restart=always
+RestartSec=3
+RuntimeDirectory=aios
+
+# Network management
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target

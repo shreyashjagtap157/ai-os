@@ -1,0 +1,32 @@
+# Build outputs
+build/output/
+build/buildroot/
+*.o
+*.so
+*.a
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/var/
+
+# Temporary
+*.tmp
+*.bak

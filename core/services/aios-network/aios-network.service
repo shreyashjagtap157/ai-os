@@ -1,0 +1,39 @@
+[Unit]
+Description=AI-OS Network Manager Service
+Documentation=https://github.com/ai-os/docs
+After=network.target systemd-networkd.service
+Wants=network-online.target
+Before=aios-agent.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/aios/core/services/aios-network/network.py
+Restart=always
+RestartSec=5
+WatchdogSec=30
+
+# Security hardening
+User=root
+Group=root
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/aios /run/aios /etc/NetworkManager
+PrivateTmp=true
+NoNewPrivileges=true
+
+# Network capabilities
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+Environment=AIOS_NETWORK_LOG_LEVEL=INFO
+EnvironmentFile=-/etc/aios/network.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=aios-network
+
+[Install]
+WantedBy=multi-user.target

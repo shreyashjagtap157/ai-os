@@ -1,0 +1,9 @@
+{
+    "name": "Default Dark",
+    "bg_gradient_start": "#1a1a2e",
+    "bg_gradient_end": "#16213e",
+    "text_primary": "#ffffff",
+    "text_secondary": "rgba(255, 255, 255, 0.7)",
+    "accent_color": "#667eea",
+    "input_bg": "rgba(255, 255, 255, 0.1)"
+}

@@ -1,0 +1,56 @@
+{
+    "name": "smart-home-plugin",
+    "version": "1.0.0",
+    "description": "Smart home device control plugin for AI-OS",
+    "author": "AI-OS Team",
+    "main": "main.py",
+    "permissions": [
+        "network",
+        "notify"
+    ],
+    "intents": [
+        {
+            "pattern": "(turn on|switch on|enable) the? {device}",
+            "action": "device_on"
+        },
+        {
+            "pattern": "(turn off|switch off|disable) the? {device}",
+            "action": "device_off"
+        },
+        {
+            "pattern": "set {device} brightness to {value}%?",
+            "action": "set_brightness"
+        },
+        {
+            "pattern": "set {device} (temperature|thermostat) to {value} degrees?",
+            "action": "set_temperature"
+        },
+        {
+            "pattern": "(what is|show) the (status|state) of {device}",
+            "action": "get_status"
+        },
+        {
+            "pattern": "list all (devices|smart devices)",
+            "action": "list_devices"
+        }
+    ],
+    "entities": {
+        "device": [
+            "lights",
+            "living room lights",
+            "bedroom lights",
+            "kitchen lights",
+            "thermostat",
+            "AC",
+            "heater",
+            "fan",
+            "TV",
+            "garage door"
+        ]
+    },
+    "config": {
+        "hub_type": "home_assistant",
+        "hub_url": "http://localhost:8123",
+        "api_token": ""
+    }
+}

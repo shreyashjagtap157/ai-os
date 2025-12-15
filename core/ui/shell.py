@@ -95,47 +95,14 @@ if HAS_GTK:
         
         def apply_theme(self):
             """Apply AI-OS theme"""
+            from theme import ThemeManager
+            
+            # Load theme
+            manager = ThemeManager(os.path.join(os.path.dirname(__file__), 'themes'))
+            theme = manager.load_theme('default')
+            
             css_provider = Gtk.CssProvider()
-            css_provider.load_from_data(b"""
-                window {
-                    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-                }
-                .time-label {
-                    font-size: 72px;
-                    font-weight: 300;
-                    color: white;
-                }
-                .date-label {
-                    font-size: 24px;
-                    color: rgba(255, 255, 255, 0.7);
-                }
-                .agent-input {
-                    font-size: 18px;
-                    padding: 16px 24px;
-                    border-radius: 30px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: none;
-                    color: white;
-                    caret-color: #667eea;
-                }
-                .agent-input:focus {
-                    outline: none;
-                    background: rgba(255, 255, 255, 0.15);
-                }
-                .response-label {
-                    font-size: 16px;
-                    color: rgba(255, 255, 255, 0.8);
-                    padding: 20px;
-                }
-                .status-bar {
-                    background: rgba(0, 0, 0, 0.3);
-                    padding: 8px 16px;
-                }
-                .status-text {
-                    font-size: 14px;
-                    color: white;
-                }
-            """)
+            css_provider.load_from_data(theme.to_css())
             
             Gtk.StyleContext.add_provider_for_display(
                 Gdk.Display.get_default(),

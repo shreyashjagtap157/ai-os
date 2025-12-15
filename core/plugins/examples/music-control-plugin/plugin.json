@@ -1,0 +1,67 @@
+{
+    "name": "music-control-plugin",
+    "version": "1.0.0",
+    "description": "Music playback control plugin for AI-OS",
+    "author": "AI-OS Team",
+    "main": "main.py",
+    "permissions": [
+        "audio",
+        "notify"
+    ],
+    "intents": [
+        {
+            "pattern": "play( some)? music",
+            "action": "play_music"
+        },
+        {
+            "pattern": "play {song}( by {artist})?",
+            "action": "play_song"
+        },
+        {
+            "pattern": "(pause|stop)( the)? music",
+            "action": "pause"
+        },
+        {
+            "pattern": "resume( the)? music",
+            "action": "resume"
+        },
+        {
+            "pattern": "(next|skip)( song| track)?",
+            "action": "next_track"
+        },
+        {
+            "pattern": "(previous|last)( song| track)?",
+            "action": "previous_track"
+        },
+        {
+            "pattern": "(set )?volume (to |at )?{value}%?",
+            "action": "set_volume"
+        },
+        {
+            "pattern": "(turn )?(volume )?(up|louder)",
+            "action": "volume_up"
+        },
+        {
+            "pattern": "(turn )?(volume )?(down|quieter)",
+            "action": "volume_down"
+        },
+        {
+            "pattern": "what('s| is)( this)? song|what are we listening to",
+            "action": "now_playing"
+        },
+        {
+            "pattern": "(shuffle|random)( mode)?( on| off)?",
+            "action": "toggle_shuffle"
+        },
+        {
+            "pattern": "repeat( mode)?( on| off)?",
+            "action": "toggle_repeat"
+        }
+    ],
+    "config": {
+        "default_player": "spotify",
+        "spotify_client_id": "",
+        "spotify_client_secret": "",
+        "default_volume": 50
+    }
+}

@@ -210,6 +210,8 @@ Available system commands you can help with:
 Always be helpful, concise, and security-conscious. Never execute dangerous commands without confirmation.
 If a task requires multiple steps, explain your plan before executing."""
 
+    MAX_CONVERSATION_HISTORY = 20  # Limit to prevent memory issues
+
     def __init__(self):
         self._provider: Optional[LLMProvider] = None
         self._conversation: List[Message] = []
@@ -237,9 +239,16 @@ If a task requires multiple steps, explain your plan before executing."""
         # Initialize conversation with system prompt
         self._conversation = [Message(role="system", content=self.SYSTEM_PROMPT)]
     
+    def _truncate_history(self):
+        """Truncate conversation history to prevent memory issues"""
+        if len(self._conversation) > self.MAX_CONVERSATION_HISTORY:
+            # Keep system prompt and last N-1 messages
+            self._conversation = [self._conversation[0]] + self._conversation[-(self.MAX_CONVERSATION_HISTORY - 1):]
+    
     async def chat(self, user_input: str, stream: bool = False) -> str:
         """Send a message and get a response"""
         self._conversation.append(Message(role="user", content=user_input))
+        self._truncate_history()
         
         if stream:
             full_response = ""
@@ -253,6 +262,7 @@ If a task requires multiple steps, explain your plan before executing."""
             response_content = response.content
         
         self._conversation.append(Message(role="assistant", content=response_content))
+        self._truncate_history()
         return response_content
     
     def clear_history(self):

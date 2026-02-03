@@ -1,0 +1,9 @@
+# AI-OS config template
+agent:
+  allowed_root: ./
+  log_level: INFO
+  api_key: "REPLACE_WITH_RANDOM_KEY"
+  session_hmac_key: ""
+
+plugins:
+  enabled: ["sample_echo"]

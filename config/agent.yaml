@@ -1,0 +1,63 @@
+distributed_mesh:
+  enabled: true
+  node_role: "agent"  # agent, coordinator, or observer
+  consul_host: "localhost"
+  consul_port: 8500
+  service_name: "ai-os-agent"
+  health_check_interval_sec: 30
+  health_check_timeout_sec: 5
+  heartbeat_interval_sec: 10
+  max_peers: 50
+
+llm_optimization:
+  enabled: true
+  kv_cache_enabled: true
+  kv_cache_size_gb: 4.0
+  quantization_enabled: true
+  quantization_bits: 8  # 8 or 4
+  batch_size: 32
+  max_seq_length: 4096
+  enable_speculative_decoding: true
+  speculation_length: 5
+  request_batching_enabled: true
+  batch_timeout_ms: 100
+  token_routing_enabled: true
+
+federated_learning:
+  enabled: true
+  privacy:
+    enabled: true
+    epsilon: 1.0
+    delta: 0.00001
+    clipping_norm: 1.0
+  gradient_compression:
+    enabled: true
+    compression_ratio: 0.1
+    algorithm: "topk"
+  aggregation:
+    algorithm: "fedavg"
+    async_enabled: true
+    client_selection_fraction: 0.5
+  min_clients_for_round: 2
+  max_rounds: 100
+  local_epochs: 5
+  local_batch_size: 32
+
+rpc:
+  host: "0.0.0.0"
+  port: 8000
+  max_connections: 100
+  request_timeout_sec: 30
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "./logs/agent.log"
+  max_file_size_mb: 100
+  backup_count: 5
+
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_sec: 60
+  alert_enabled: true

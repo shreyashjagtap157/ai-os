@@ -1,4 +1,72 @@
 """
+Agent configuration loader (pydantic-based) with secure secret fallback.
+
+This module loads agent configuration from YAML and will attempt to
+retrieve `api_key` and `session_hmac_key` from the OS keyring when not
+present in the config file.
+"""
+from pathlib import Path
+from pydantic import BaseModel
+import yaml
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import keyring
+except Exception:
+    keyring = None
+
+
+class AgentConfig(BaseModel):
+    allowed_root: str = "."
+    log_level: str = "INFO"
+    api_key: str | None = None
+    session_hmac_key: str | None = None
+
+
+def _keyring_get(name: str) -> str | None:
+    if not keyring:
+        return None
+    try:
+        return keyring.get_password("ai-os", name)
+    except Exception:
+        logger.exception("keyring.get_password failed")
+        return None
+
+
+def load_config(path: Path | str = "../config.yaml") -> AgentConfig:
+    p = Path(path)
+    data = {}
+    if not p.exists():
+        # try template
+        tpl = p.with_suffix(".template")
+        if tpl.exists():
+            try:
+                data = yaml.safe_load(tpl.read_text()) or {}
+            except Exception:
+                logger.exception("Failed to load config template")
+                data = {}
+        else:
+            data = {}
+    else:
+        try:
+            data = yaml.safe_load(p.read_text()) or {}
+        except Exception:
+            logger.exception("Failed to parse config.yaml")
+            data = {}
+
+    agent = data.get("agent", {})
+
+    # fallback to keyring for secrets
+    api_key = agent.get("api_key") or _keyring_get("api_key")
+    session_hmac_key = agent.get("session_hmac_key") or _keyring_get("session_hmac_key")
+    agent["api_key"] = api_key
+    agent["session_hmac_key"] = session_hmac_key
+
+    return AgentConfig(**agent)
+"""
 AI-OS Configuration Management
 Centralized settings with environment variable support
 """
@@ -58,17 +126,17 @@ class UISettings(BaseSettings):
 
 class Settings:
     """Combined settings container"""
-    
+
     def __init__(self):
         self.ai = AISettings()
         self.voice = VoiceSettings()
         self.system = SystemSettings()
         self.ui = UISettings()
-    
+
     def is_ai_configured(self) -> bool:
         """Check if any AI backend is configured"""
         return bool(self.ai.openai_api_key or self.ai.anthropic_api_key)
-    
+
     def get_active_ai_provider(self) -> Optional[str]:
         """Get the active AI provider"""
         if self.ai.openai_api_key:

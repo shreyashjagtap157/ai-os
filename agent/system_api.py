@@ -1,7 +1,46 @@
 """
-AI-OS Enhanced System API
-Provides secure, comprehensive access to system resources
+System API stubs with simple safety checks.
 """
+from pathlib import Path
+import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class SystemAPI:
+    """Secure system API for agent operations."""
+    def __init__(self, allowed_root: Path | None = None):
+        self.allowed_root = allowed_root.resolve() if allowed_root else None
+
+    def _safe_path(self, path: str | Path) -> Path:
+        p = Path(path).resolve()
+        if self.allowed_root and self.allowed_root not in p.parents and p != self.allowed_root:
+            logger.warning(f"Path access denied: {p} (outside {self.allowed_root})")
+            raise PermissionError(f"Path not allowed: {p}")
+        return p
+
+    def list_files(self, path: str | Path = ".") -> list[str]:
+        """List files in a directory."""
+        try:
+            p = self._safe_path(path)
+            if not p.is_dir():
+                raise NotADirectoryError(f"{p} is not a directory")
+            return sorted([f.name for f in p.iterdir()])
+        except FileNotFoundError as e:
+            logger.error(f"Directory not found: {p}")
+            raise
+        except OSError as e:
+            logger.error(f"Error listing {p}: {e}")
+            raise
+
+    def get_time(self) -> str:
+        """Get current system time in ISO format."""
+        return datetime.datetime.now().isoformat()
+
+    def echo(self, msg: str) -> str:
+        """Echo a message."""
+        return msg
 import os
 import subprocess
 import datetime

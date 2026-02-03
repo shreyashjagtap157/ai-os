@@ -1,0 +1,6 @@
+name: heavy_plugin
+network: false
+filesystem: false
+exec: false
+max_cpu_seconds: 2
+max_memory_mb: 50

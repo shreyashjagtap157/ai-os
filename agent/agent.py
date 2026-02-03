@@ -1,48 +1,135 @@
 """
-AI-OS Agent: Main event loop and system API stubs (prototype)
+AI-OS Agent: Main event loop with command registry and system API.
 """
-import time
+import logging
+from pathlib import Path
+from typing import Callable
 from agent.input.text_input import get_text_input
 from agent.input.voice_input import get_voice_input
 from agent.input.gesture_input import get_gesture_input
+from agent.system_api import SystemAPI
 
-# System API stubs
-class SystemAPI:
-    def list_files(self, path="."):
-        # Placeholder for file listing
-        import os
-        return os.listdir(path)
-    def get_time(self):
-        import datetime
-        return datetime.datetime.now().isoformat()
-    def echo(self, msg):
-        return msg
+logger = logging.getLogger(__name__)
+
+
+def parse_command(raw: str) -> tuple[str, list[str]]:
+    """Parse raw command string into command and args."""
+    parts = raw.strip().split()
+    if not parts:
+        return "", []
+    return parts[0], parts[1:]
+
+
+class CommandRegistry:
+    """Registry of available commands."""
+    def __init__(self, api: SystemAPI):
+        self.api = api
+        self.commands: dict[str, tuple[Callable, str]] = {
+            "exit": (self._cmd_exit, "Exit the agent"),
+            "quit": (self._cmd_exit, "Alias for exit"),
+            "help": (self._cmd_help, "Show this help message"),
+            "time": (self._cmd_time, "Show system time"),
+            "ls": (self._cmd_ls, "List files (usage: ls [path])"),
+            "echo": (self._cmd_echo, "Echo a message (usage: echo <text>)"),
+        }
+
+    def _cmd_exit(self, args: list[str]) -> bool:
+        logger.info("Agent exit requested")
+        return False
+
+    def _cmd_help(self, args: list[str]) -> bool:
+        print("[AI-OS] Available commands:")
+        for name, (_, desc) in self.commands.items():
+            print(f"  {name:10} - {desc}")
+        return True
+
+    def _cmd_time(self, args: list[str]) -> bool:
+        print(f"[AI-OS] System time: {self.api.get_time()}")
+        return True
+
+    def _cmd_ls(self, args: list[str]) -> bool:
+        path = args[0] if args else "."
+        try:
+            files = self.api.list_files(path)
+            print(f"[AI-OS] Files in {path}: {files}")
+        except FileNotFoundError:
+            print(f"[AI-OS] Error: Directory not found: {path}")
+        except NotADirectoryError as e:
+            print(f"[AI-OS] Error: {e}")
+        except PermissionError as e:
+            print(f"[AI-OS] Error: {e}")
+        except Exception as e:
+            logger.exception("Unexpected error in ls command")
+            print(f"[AI-OS] Error: {e}")
+        return True
+
+    def _cmd_echo(self, args: list[str]) -> bool:
+        msg = " ".join(args)
+        print(f"[AI-OS] {self.api.echo(msg)}")
+        return True
+
+    def execute(self, cmd: str, args: list[str]) -> bool:
+        """Execute a command. Return False to exit agent."""
+        if not cmd:
+            return True
+        # log command for audit
+        try:
+            from agent.session import log_command_signed
+            from agent.config import load_config
+
+            cfg = load_config()
+            hmac_key = cfg.session_hmac_key
+            log_command_signed(cmd, args, hmac_key)
+        except Exception:
+            logger.exception("Failed to write session log")
+
+        if cmd not in self.commands:
+            print(f"[AI-OS] Unknown command: {cmd}. Type 'help' for available commands.")
+            return True
+        handler, _ = self.commands[cmd]
+        try:
+            return handler(args)
+        except Exception as e:
+            logger.exception(f"Error executing {cmd}")
+            print(f"[AI-OS] Error: {e}")
+            return True
 
 
 def main():
-    api = SystemAPI()
-    print("[AI-OS Agent] Starting event loop (prototype)...")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(name)s] %(levelname)s: %(message)s"
+    )
+    allowed_root = Path.cwd()
+    api = SystemAPI(allowed_root=allowed_root)
+    registry = CommandRegistry(api)
+    # plugin loading
+    try:
+        from agent.plugins import __init__ as plugin_loader
+        from importlib import import_module
+        plugin_dir = Path(__file__).parent / "plugins"
+        discovered = plugin_loader.discover_plugins(plugin_dir)
+        for name in discovered:
+            mod = plugin_loader.load_plugin(f"agent.plugins.{name}")
+            if mod and hasattr(mod, 'register'):
+                try:
+                    mod.register(registry)
+                    logger.info(f"Loaded plugin: {name}")
+                except Exception:
+                    logger.exception(f"Plugin {name} failed to register")
+    except Exception:
+        logger.exception("Plugin loading failed")
+    logger.info("AI-OS Agent starting...")
+    print("[AI-OS Agent] Starting event loop (type 'help' for commands)")
     while True:
-        print("[AI-OS Agent] Waiting for input/event...")
-        # Try text input first
-        cmd = get_text_input()
-        if cmd.strip() == "exit":
-            print("[AI-OS Agent] Exiting event loop.")
+        raw = get_text_input()
+        cmd, args = parse_command(raw)
+        if not registry.execute(cmd, args):
             break
-        elif cmd.strip() == "time":
-            print(f"[AI-OS Agent] System time: {api.get_time()}")
-        elif cmd.strip().startswith("ls"):
-            path = cmd.strip().split(" ",1)[1] if " " in cmd else "."
-            print(f"[AI-OS Agent] Files: {api.list_files(path)}")
-        elif cmd.strip().startswith("echo"):
-            msg = cmd.strip().split(" ",1)[1] if " " in cmd else ""
-            print(f"[AI-OS Agent] Echo: {api.echo(msg)}")
-        else:
-            print(f"[AI-OS Agent] Unknown command: {cmd}")
-        # Placeholders for voice/gesture input (future)
+        # Future hooks for voice/gesture input
         # voice = get_voice_input()
         # gesture = get_gesture_input()
-        time.sleep(1)
+
 
 if __name__ == "__main__":
     main()

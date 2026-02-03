@@ -1,3 +1,11 @@
+# Core runtime requirements for AI-OS prototype
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+pydantic>=2.0
+PyYAML>=6.0
+rich>=13.0
+prometheus-client>=0.17.0
+keyring>=23.0.0
 # AI-OS Python Requirements
 # Core agent dependencies
 
